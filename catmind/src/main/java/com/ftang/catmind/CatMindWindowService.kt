@@ -1,5 +1,6 @@
 package com.ftang.catmind
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -14,6 +15,7 @@ import android.util.DisplayMetrics
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -61,7 +63,6 @@ class CatMindWindowService : Service() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate() {
         super.onCreate()
-
         Log.d(TAG, "CatMindWindowService onCreated")
         //初始化WindowManager对象
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
@@ -69,10 +70,11 @@ class CatMindWindowService : Service() {
         initCatMindBottomWindow()
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun initCatMindFloatWindow() {
         //初始化猫猫头布局
         catFloatWindow = LayoutInflater.from(this).inflate(R.layout.cat_float_window, null)
-        //初始化CatLayoutParam
+        //初始化CatFloatLayoutParam
         catFloatWindowLayoutParams = LayoutParams().apply {
             type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -84,48 +86,75 @@ class CatMindWindowService : Service() {
             //位置大小设置
             width = ViewGroup.LayoutParams.WRAP_CONTENT
             height = ViewGroup.LayoutParams.WRAP_CONTENT
-            // 获取屏幕的宽度和高度
-            // 获取屏幕的宽度和高度
-            val displayMetrics = DisplayMetrics()
-            windowManager.defaultDisplay.getMetrics(displayMetrics)
-            val screenWidth = displayMetrics.widthPixels
-            val screenHeight = displayMetrics.heightPixels
-            x = screenWidth - width
-            y = 0
+            if (CatMind.floatX == 0 && CatMind.floatY == 0) {
+                // 获取屏幕的宽度和高度
+                val displayMetrics = DisplayMetrics()
+                windowManager.defaultDisplay.getMetrics(displayMetrics)
+                val screenWidth = displayMetrics.widthPixels
+                val screenHeight= displayMetrics.heightPixels
+                x = screenWidth / 2 - width / 2
+                y = screenHeight / 2 - height / 2
+                CatMind.floatX = x
+                CatMind.floatY = y
+            } else {
+                x = CatMind.floatX
+                y = CatMind.floatY
+            }
         }
-        //添加猫猫头
+        //添加猫猫头悬浮窗
         windowManager.addView(catFloatWindow, catFloatWindowLayoutParams)
         //设置猫猫头的监听对象:用于移动浮动窗口
-        catFloatWindow.setOnTouchListener(
-            CatMindFloatTouchListener(
-                catFloatWindowLayoutParams,
-                windowManager
-            )
-        )
-        //设置点击监听：用于展示bottom窗口
-        catFloatWindow.setOnClickListener {
-            if (bottomVisible) {
-                windowManager.removeView(catBottomWindow)
-            } else {
-                refreshCatBottomWindow()
-                windowManager.addView(catBottomWindow, catBottomWindowLayoutParams)
+        catFloatWindow.setOnTouchListener(object : View.OnTouchListener {
+            //悬浮窗相对于屏幕左上角的坐标，不可以直接当作LayoutParams的x、y的值，需要进行转换
+            private var mFloatRawX = 0
+            private var mFloatRawY = 0
+            override fun onTouch(view: View?, motionEvent: MotionEvent?): Boolean {
+                when (motionEvent?.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        mFloatRawX = motionEvent.rawX.toInt()
+                        mFloatRawY = motionEvent.rawY.toInt()
+                    }
+
+                    MotionEvent.ACTION_MOVE -> {
+                        val nowX = motionEvent.rawX.toInt()
+                        val nowY = motionEvent.rawY.toInt()
+                        val movedX = nowX - mFloatRawX
+                        val movedY = nowY - mFloatRawY
+                        mFloatRawX = nowX
+                        mFloatRawY = nowY
+                        catFloatWindowLayoutParams.apply {
+                            x += movedX
+                            y += movedY
+                            CatMind.floatX = x
+                            CatMind.floatY = y
+                        }
+                        windowManager.updateViewLayout(view, catFloatWindowLayoutParams)
+                    }
+                }
+                return false
             }
-            bottomVisible = !bottomVisible
-        }
+        })
+        //设置双击监听：用于展示bottom窗口
+        catFloatWindow.setOnClickListener(object : View.OnClickListener {
+            private var lastClickTime:Long = 0L
+            private val CLICK_INTERVAL:Long = 300
+            override fun onClick(view: View?) {
+                val now = System.currentTimeMillis()
+                if (now - lastClickTime < CLICK_INTERVAL) {
+                    //触发双击事件
+                    if (bottomVisible) {
+                        windowManager.removeView(catBottomWindow)
+                    } else {
+                        refreshCatBottomWindow()
+                        windowManager.addView(catBottomWindow, catBottomWindowLayoutParams)
+                    }
+                    bottomVisible = !bottomVisible
+                }
+                lastClickTime = now
+            }
+        })
     }
 
-    private fun refreshCatBottomWindow() {
-        catBottomWindow.findViewById<TextView>(R.id.activity_name).apply {
-            text = activityClassName.ifEmpty {
-                "no activity"
-            }
-        }
-        catBottomWindow.findViewById<TextView>(R.id.fragment_name).apply {
-            text = fragmentClassName.ifEmpty {
-                "no fragment"
-            }
-        }
-    }
 
     private fun initCatMindBottomWindow() {
         catBottomWindow = LayoutInflater.from(this).inflate(R.layout.cat_mind_bottom_layout, null)
@@ -147,9 +176,20 @@ class CatMindWindowService : Service() {
         }
         catBottomWindow.findViewById<View>(R.id.cat_mind_bottom_dismiss).apply {
             setOnClickListener {
-                //todo：改为双击
                 bottomVisible = !bottomVisible
                 windowManager.removeView(catBottomWindow)
+            }
+        }
+    }
+    private fun refreshCatBottomWindow() {
+        catBottomWindow.findViewById<TextView>(R.id.activity_name).apply {
+            text = activityClassName.ifEmpty {
+                "no activity"
+            }
+        }
+        catBottomWindow.findViewById<TextView>(R.id.fragment_name).apply {
+            text = fragmentClassName.ifEmpty {
+                "no fragment"
             }
         }
     }

@@ -20,6 +20,9 @@ object CatMind {
     private const val TAG : String = "CatMind"
     private lateinit var application: Application
     private const val ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE = 5469
+    //悬浮窗在父布局中的实际偏移量，可以直接应用在LayoutParams中
+    var floatX = 0
+    var floatY = 0
 
     fun initialize(application: Application) {
         Log.d(TAG,"catMind init")
