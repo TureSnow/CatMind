@@ -122,7 +122,6 @@ object CatMind {
     private fun sendActivityAndFragmentDetails2CatMind(
         activityClass: Class<out Any>,
         fragmentClass: Class<out Any>?) {
-        Log.d(TAG,"send activity and fragment")
         CatMindWindowService.sendActivityAndFragment(
             application,
             activityClass.getClassNameWithExtension(),
@@ -133,7 +132,6 @@ object CatMind {
     private fun notifyCatMindFragmentDestroyed(
         activityClass: Class<out Any>,
         fragmentClass: Class<out Any>?) {
-        Log.d(TAG, "Destroyed fragment:${fragmentClass?.getClassNameWithExtension()}")
         CatMindWindowService.notifyFragmentDestroyed(
             application,
             activityClass.getClassNameWithExtension(),

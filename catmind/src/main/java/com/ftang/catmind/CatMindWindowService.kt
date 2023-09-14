@@ -103,32 +103,9 @@ class CatMindWindowService : Service() {
         //初始化猫猫头布局
         catFloatWindow = LayoutInflater.from(this).inflate(R.layout.cat_float_window, null)
         //初始化CatFloatLayoutParam
-        catFloatWindowLayoutParams = LayoutParams().apply {
-            type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                LayoutParams.TYPE_APPLICATION_OVERLAY
-            } else {
-                LayoutParams.TYPE_PHONE
-            }
-            format = PixelFormat.RGBA_8888
-            flags = LayoutParams.FLAG_NOT_TOUCH_MODAL or LayoutParams.FLAG_NOT_FOCUSABLE
-            //位置大小设置
-            width = ViewGroup.LayoutParams.WRAP_CONTENT
-            height = ViewGroup.LayoutParams.WRAP_CONTENT
-            if (CatMind.floatX == 0 && CatMind.floatY == 0) {
-                // 获取屏幕的宽度和高度
-                val displayMetrics = DisplayMetrics()
-                windowManager.defaultDisplay.getMetrics(displayMetrics)
-                val screenWidth = displayMetrics.widthPixels
-                val screenHeight= displayMetrics.heightPixels
-                x = screenWidth / 2 - width / 2
-                y = screenHeight / 2 - height / 2
-                CatMind.floatX = x
-                CatMind.floatY = y
-            } else {
-                x = CatMind.floatX
-                y = CatMind.floatY
-            }
-        }
+        catFloatWindowLayoutParams = CatMindLayoutParamsFactory.createLayoutParams(
+            CatMindLayoutParamsFactory.FLOAT_TYPE
+        )
         //添加猫猫头悬浮窗
         windowManager.addView(catFloatWindow, catFloatWindowLayoutParams)
         //设置猫猫头的监听对象:用于移动浮动窗口
@@ -186,22 +163,9 @@ class CatMindWindowService : Service() {
 
     private fun initCatMindBottomWindow() {
         catBottomWindow = LayoutInflater.from(this).inflate(R.layout.cat_mind_bottom_layout, null)
-        catBottomWindowLayoutParams = LayoutParams().apply {
-            type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                LayoutParams.TYPE_APPLICATION_OVERLAY
-            } else {
-                LayoutParams.TYPE_PHONE
-            }
-            format = PixelFormat.RGBA_8888
-            //位置大小设置
-            width = ViewGroup.LayoutParams.MATCH_PARENT
-            height = ViewGroup.LayoutParams.WRAP_CONTENT
-            gravity = Gravity.BOTTOM
-            flags = LayoutParams.FLAG_NOT_TOUCH_MODAL or LayoutParams.FLAG_NOT_FOCUSABLE
-            x = 0
-            y = 0
-            windowAnimations = android.R.style.Animation_Dialog
-        }
+        catBottomWindowLayoutParams = CatMindLayoutParamsFactory.createLayoutParams(
+            CatMindLayoutParamsFactory.BOTTOM_TYPE
+        )
         catBottomWindow.findViewById<View>(R.id.cat_mind_bottom_dismiss).apply {
             setOnClickListener {
                 bottomVisible = !bottomVisible
