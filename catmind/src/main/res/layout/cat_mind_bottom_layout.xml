@@ -4,8 +4,7 @@
     android:padding="1dp"
     android:elevation="@dimen/cardview_default_elevation"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:gravity="bottom">
+    android:layout_height="wrap_content">
 
     <LinearLayout
         android:layout_width="match_parent"

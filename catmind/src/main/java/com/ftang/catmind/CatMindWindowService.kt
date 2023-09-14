@@ -5,8 +5,10 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.os.Build
@@ -23,7 +25,7 @@ import android.view.WindowManager.LayoutParams
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
-
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 
 class CatMindWindowService : Service() {
     private val TAG: String = "CatMind"
@@ -37,28 +39,51 @@ class CatMindWindowService : Service() {
     private var bottomVisible = false
 
     companion object {
+        // 使用静态变量存储activity和fragment的意义在于这个service总是落后于MainActivity启动，
+        // 如果在Service中存储，那么MainActivity的消息总是会丢失
         private var activityClassName = ""
         private var fragmentClassName = ""
 
+        // 为了在bottomWindow显示的过程中实时更新Activity和Fragment，
+        // 需要采用一种通信方式通知CatMindWindowService
+        // 由CatMindWindowService更新消息
+        // 这里采用了广播的方式
+        private val ACTION_LISTEN_TO_CAT_MIND =
+            "com.ftang.catmind.ACTION_LISTEN_TO_CATMIND"
+
         fun sendActivityAndFragment(
+            context: Context,
             activityName: String?,
             fragmentName: String?,
         ) {
             activityClassName = activityName?:""
             fragmentClassName = fragmentName?:""
             Log.d("CatMind", "activity name:$activityClassName, fragment name:$fragmentClassName")
+            val intent = Intent(ACTION_LISTEN_TO_CAT_MIND)
+            LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
         }
 
         fun notifyFragmentDestroyed(
+            context: Context,
             activityName: String?,
             fragmentName: String?
         ) {
             if (activityName == activityClassName && fragmentName == fragmentClassName ) {
                 fragmentClassName = ""
             }
+            val intent = Intent(ACTION_LISTEN_TO_CAT_MIND)
+            LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
         }
     }
 
+    private val catMindMessageReceiver:BroadcastReceiver = object : BroadcastReceiver(){
+        override fun onReceive(context: Context, intent: Intent) {
+            if (bottomVisible) {
+                catBottomWindow.findViewById<TextView>(R.id.activity_name).text = activityClassName
+                catBottomWindow.findViewById<TextView>(R.id.fragment_name).text = fragmentClassName
+            }
+        }
+    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate() {
@@ -68,6 +93,9 @@ class CatMindWindowService : Service() {
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         initCatMindFloatWindow()
         initCatMindBottomWindow()
+        LocalBroadcastManager
+            .getInstance(this)
+            .registerReceiver(catMindMessageReceiver, IntentFilter(ACTION_LISTEN_TO_CAT_MIND))
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -238,5 +266,8 @@ class CatMindWindowService : Service() {
         if (bottomVisible) {
             windowManager.removeView(catBottomWindow)
         }
+        LocalBroadcastManager
+            .getInstance(this)
+            .unregisterReceiver(catMindMessageReceiver)
     }
 }

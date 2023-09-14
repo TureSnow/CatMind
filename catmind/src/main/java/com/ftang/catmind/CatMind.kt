@@ -2,6 +2,7 @@ package com.ftang.catmind
 
 import android.app.Activity
 import android.app.Application
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -118,17 +119,23 @@ object CatMind {
         )
     }
 
-    private fun sendActivityAndFragmentDetails2CatMind(activityClass: Class<out Any>, fragmentClass: Class<out Any>?) {
+    private fun sendActivityAndFragmentDetails2CatMind(
+        activityClass: Class<out Any>,
+        fragmentClass: Class<out Any>?) {
         Log.d(TAG,"send activity and fragment")
         CatMindWindowService.sendActivityAndFragment(
+            application,
             activityClass.getClassNameWithExtension(),
             fragmentClass?.getClassNameWithExtension()
         )
     }
 
-    private fun notifyCatMindFragmentDestroyed(activityClass: Class<out Any>, fragmentClass: Class<out Any>?) {
+    private fun notifyCatMindFragmentDestroyed(
+        activityClass: Class<out Any>,
+        fragmentClass: Class<out Any>?) {
         Log.d(TAG, "Destroyed fragment:${fragmentClass?.getClassNameWithExtension()}")
         CatMindWindowService.notifyFragmentDestroyed(
+            application,
             activityClass.getClassNameWithExtension(),
             fragmentClass?.getClassNameWithExtension()
         )
