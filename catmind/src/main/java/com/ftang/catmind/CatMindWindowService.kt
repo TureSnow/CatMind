@@ -10,16 +10,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
-import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
-import android.util.DisplayMetrics
 import android.util.Log
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.WindowManager.LayoutParams
 import android.widget.TextView
@@ -101,7 +97,7 @@ class CatMindWindowService : Service() {
     @SuppressLint("ClickableViewAccessibility")
     private fun initCatMindFloatWindow() {
         //初始化猫猫头布局
-        catFloatWindow = LayoutInflater.from(this).inflate(R.layout.cat_float_window, null)
+        catFloatWindow = LayoutInflater.from(this).inflate(R.layout.cat_mind_float_layout, null)
         //初始化CatFloatLayoutParam
         catFloatWindowLayoutParams = CatMindLayoutParamsFactory.createLayoutParams(
             CatMindLayoutParamsFactory.FLOAT_TYPE
