@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
@@ -38,7 +39,6 @@ object CatMind {
             object : LifecycleObserver {
                 @OnLifecycleEvent(Lifecycle.Event.ON_START)
                 fun onAppToForeground() {
-                    //todo:兼容foreground
                     launchService(application, catMindWindowService)
                 }
 
@@ -69,21 +69,12 @@ object CatMind {
     ) {
         val hasOverLayPermission = hasOverLayPermission(application)
         if (hasOverLayPermission) {
-            //todo:兼容Foreground
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-//                ContextCompat.startForegroundService(application, catMindWindowService)
-//            else
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                ContextCompat.startForegroundService(application, catMindWindowService)
+            else
                 application.startService(catMindWindowService)
         } else {
             Log.d(TAG, "launchService fail, no permission")
-        }
-    }
-
-    private fun stopService(
-        application: Application
-    ) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            //todo：兼容foreground
         }
     }
 
