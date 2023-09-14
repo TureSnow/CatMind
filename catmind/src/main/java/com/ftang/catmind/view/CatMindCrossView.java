@@ -20,29 +20,21 @@ public class CatMindCrossView extends View {
     public CatMindCrossView(Context context) {
         super(context);
         init(null, 0);
-        // 将背景设置为透明
-        setBackgroundColor(Color.TRANSPARENT);
     }
 
     public CatMindCrossView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         init(attrs, 0);
-        // 将背景设置为透明
-        setBackgroundColor(Color.TRANSPARENT);
     }
 
     public CatMindCrossView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(attrs, 0);
-        // 将背景设置为透明
-        setBackgroundColor(Color.TRANSPARENT);
     }
 
     public CatMindCrossView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         init(attrs, 0);
-        // 将背景设置为透明
-        setBackgroundColor(Color.TRANSPARENT);
     }
 
     private void init(AttributeSet attrs, int defStyle) {
