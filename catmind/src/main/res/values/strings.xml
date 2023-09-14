@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">CatMind</string>
+    <string name="text_dialog_bottom_sheet">bottomSheet</string>
+    <string name="text_welcome_message">welcome</string>
+</resources>
