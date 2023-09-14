@@ -34,6 +34,10 @@ class CatMindWindowService : Service() {
     private lateinit var catBottomWindow: View
     private var bottomVisible = false
 
+    private lateinit var catCrossWindowLayoutParams: LayoutParams
+    private lateinit var catCrossWindow: View
+    private var crossVisible = false
+
     companion object {
         // 使用静态变量存储activity和fragment的意义在于这个service总是落后于MainActivity启动，
         // 如果在Service中存储，那么MainActivity的消息总是会丢失
@@ -89,6 +93,7 @@ class CatMindWindowService : Service() {
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         initCatMindFloatWindow()
         initCatMindBottomWindow()
+        initCatMindCrossWindow()
         LocalBroadcastManager
             .getInstance(this)
             .registerReceiver(catMindMessageReceiver, IntentFilter(ACTION_LISTEN_TO_CAT_MIND))
@@ -156,7 +161,6 @@ class CatMindWindowService : Service() {
         })
     }
 
-
     private fun initCatMindBottomWindow() {
         catBottomWindow = LayoutInflater.from(this).inflate(R.layout.cat_mind_bottom_layout, null)
         catBottomWindowLayoutParams = CatMindLayoutParamsFactory.createLayoutParams(
@@ -168,6 +172,66 @@ class CatMindWindowService : Service() {
                 windowManager.removeView(catBottomWindow)
             }
         }
+        catBottomWindow.findViewById<TextView>(R.id.show_cross).apply {
+            setOnClickListener {
+                bottomVisible = !bottomVisible
+                windowManager.removeView(catBottomWindow)
+                crossVisible = !crossVisible
+                windowManager.addView(catCrossWindow, catCrossWindowLayoutParams)
+            }
+        }
+    }
+    private fun initCatMindCrossWindow() {
+        catCrossWindow = LayoutInflater.from(this).inflate(R.layout.cat_mind_cross_layout, null)
+        catCrossWindowLayoutParams = CatMindLayoutParamsFactory.createLayoutParams(
+            CatMindLayoutParamsFactory.CROSS_TYPE
+        )
+        catCrossWindow.setOnTouchListener(object : View.OnTouchListener {
+            //聚焦圈相对于屏幕左上角的坐标，
+            // 不可以直接当作LayoutParams的x、y的值，需要进行转换
+            private var mFloatRawX = 0
+            private var mFloatRawY = 0
+            override fun onTouch(view: View?, motionEvent: MotionEvent?): Boolean {
+                when (motionEvent?.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        mFloatRawX = motionEvent.rawX.toInt()
+                        mFloatRawY = motionEvent.rawY.toInt()
+                    }
+
+                    MotionEvent.ACTION_MOVE -> {
+                        val nowX = motionEvent.rawX.toInt()
+                        val nowY = motionEvent.rawY.toInt()
+                        val movedX = nowX - mFloatRawX
+                        val movedY = nowY - mFloatRawY
+                        mFloatRawX = nowX
+                        mFloatRawY = nowY
+                        catCrossWindowLayoutParams.apply {
+                            x += movedX
+                            y += movedY
+                        }
+                        windowManager.updateViewLayout(view, catCrossWindowLayoutParams)
+                    }
+                }
+                return false
+            }
+        })
+        //设置双击监听：用于关闭聚焦圈
+        catCrossWindow.setOnClickListener(object : View.OnClickListener {
+            private var lastClickTime:Long = 0L
+            private val CLICK_INTERVAL:Long = 300
+            override fun onClick(view: View?) {
+                val now = System.currentTimeMillis()
+                if (now - lastClickTime < CLICK_INTERVAL) {
+                    //触发双击事件
+                    if (crossVisible) {
+                        windowManager.removeView(catCrossWindow)
+                    }
+                    crossVisible = !crossVisible
+                }
+                lastClickTime = now
+            }
+        })
+
     }
     private fun refreshCatBottomWindow() {
         catBottomWindow.findViewById<TextView>(R.id.activity_name).apply {
@@ -225,6 +289,9 @@ class CatMindWindowService : Service() {
         windowManager.removeView(catFloatWindow)
         if (bottomVisible) {
             windowManager.removeView(catBottomWindow)
+        }
+        if (crossVisible) {
+            windowManager.removeView(catCrossWindow)
         }
         LocalBroadcastManager
             .getInstance(this)
