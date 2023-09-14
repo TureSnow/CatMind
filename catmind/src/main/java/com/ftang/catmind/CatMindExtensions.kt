@@ -12,7 +12,7 @@ fun Application.registerPartialActivityLifecycleCallbacks(
     this.registerActivityLifecycleCallbacks(object :
         Application.ActivityLifecycleCallbacks {
         override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-            Log.d("felixtest", "oncreate")
+            Log.d("CatMind", "Application onCreate")
             onActivityCreated(activity)
         }
 
@@ -21,7 +21,7 @@ fun Application.registerPartialActivityLifecycleCallbacks(
         }
 
         override fun onActivityResumed(activity: Activity) {
-            Log.d("felixtest", "onResume")
+            Log.d("CatMind", "Application onResume")
             onActivityResumed(activity)
         }
 
