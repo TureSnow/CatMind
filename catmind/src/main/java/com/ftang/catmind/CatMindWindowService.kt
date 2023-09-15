@@ -211,6 +211,16 @@ class CatMindWindowService : Service() {
                         }
                         windowManager.updateViewLayout(view, catCrossWindowLayoutParams)
                     }
+//
+                    MotionEvent.ACTION_UP -> {
+                        //这里要去渲染view的边界，获取布局信息并显示
+                        val location = IntArray(2)
+                        catCrossWindow.getLocationOnScreen(location)
+                        val size = catCrossWindow.measuredHeight / 2
+                        val centerX = location[0] + size
+                        val centerY = location[1] + size
+                        Log.d(TAG, "originX:${location.get(0)}, originY:${location.get(1)},centerX:$centerX, centerY:$centerY")
+                    }
                 }
                 return false
             }
@@ -231,7 +241,6 @@ class CatMindWindowService : Service() {
                 lastClickTime = now
             }
         })
-
     }
     private fun refreshCatBottomWindow() {
         catBottomWindow.findViewById<TextView>(R.id.activity_name).apply {
