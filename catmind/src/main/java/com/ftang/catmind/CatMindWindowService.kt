@@ -16,12 +16,14 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.WindowManager.LayoutParams
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+
 
 class CatMindWindowService : Service() {
     private val TAG: String = "CatMind"
@@ -187,8 +189,6 @@ class CatMindWindowService : Service() {
             CatMindLayoutParamsFactory.CROSS_TYPE
         )
         catCrossWindow.setOnTouchListener(object : View.OnTouchListener {
-            //聚焦圈相对于屏幕左上角的坐标，
-            // 不可以直接当作LayoutParams的x、y的值，需要进行转换
             private var mFloatRawX = 0
             private var mFloatRawY = 0
             override fun onTouch(view: View?, motionEvent: MotionEvent?): Boolean {
@@ -219,7 +219,7 @@ class CatMindWindowService : Service() {
                         val size = catCrossWindow.measuredHeight / 2
                         val centerX = location[0] + size
                         val centerY = location[1] + size
-                        Log.d(TAG, "originX:${location.get(0)}, originY:${location.get(1)},centerX:$centerX, centerY:$centerY")
+                        findViewByPoint(centerX, centerY)
                     }
                 }
                 return false
@@ -253,6 +253,56 @@ class CatMindWindowService : Service() {
                 "no fragment"
             }
         }
+    }
+
+    private fun findViewByPoint(x: Int, y: Int): View? {
+        val activity = CatMind.activityReference?.get() ?: return null
+        val decorView = activity.window.decorView
+        val decorLocation = IntArray(2);
+        decorView.getLocationOnScreen(decorLocation)
+        val decorX = x - decorLocation[0]
+        val decorY = y - decorLocation[1]
+        val foundView = findTargetView(decorView, decorX, decorY)
+        if (foundView == null) {
+            Log.d(TAG, "foundView is null")
+        } else {
+            Log.d(TAG, "foundView name: ${foundView.accessibilityClassName}")
+        }
+        return null
+    }
+
+    /**
+     * 根据绝对坐标查找view中的元素
+     */
+    private fun findTargetView(view: View, x: Int, y: Int): View? {
+        if (view is ViewGroup) {
+            for (i in 0 until view.childCount) {
+                val childView = view.getChildAt(i)
+                val location = IntArray(2)
+                childView.getLocationOnScreen(location)
+                val childX = x - location[0]
+                val childY = y - location[1]
+                if (childX >= 0 && childY >= 0 && childX <= childView.width && childY <= childView.height) {
+                    // 在子 View 中查找
+                    val targetView = findTargetView(childView, x, y)
+                    if (targetView != null) {
+                        return targetView
+                    } else {
+                        return childView
+                    }
+                }
+            }
+        } else {
+            val location = IntArray(2)
+            view.getLocationOnScreen(location)
+            val viewX = x - location[0]
+            val viewY = y - location[1]
+            if (viewX >= 0 && viewY >= 0 && viewX <= view.width && viewY <= view.height) {
+                // 找到了对应坐标的 View
+                return view
+            }
+        }
+        return null
     }
 
     override fun onBind(p0: Intent?): IBinder? = null

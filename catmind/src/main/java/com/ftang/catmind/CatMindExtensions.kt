@@ -7,7 +7,8 @@ import android.util.Log
 
 fun Application.registerPartialActivityLifecycleCallbacks(
     onActivityCreated: (activity: Activity) -> Unit,
-    onActivityResumed: (activity: Activity) -> Unit
+    onActivityResumed: (activity: Activity) -> Unit,
+    onActivityDestroyed: (activity: Activity) -> Unit
 ){
     this.registerActivityLifecycleCallbacks(object :
         Application.ActivityLifecycleCallbacks {
@@ -38,7 +39,7 @@ fun Application.registerPartialActivityLifecycleCallbacks(
         }
 
         override fun onActivityDestroyed(activity: Activity) {
-
+            onActivityDestroyed(activity)
         }
     })
 }
