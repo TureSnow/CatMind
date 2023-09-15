@@ -5,6 +5,6 @@
     android:background="@drawable/cat_mind_float_background">
     <com.ftang.catmind.view.CatMindCrossView
         android:background="@drawable/cat_mind_float_background"
-        android:layout_height="100dp"
-        android:layout_width="100dp"/>
+        android:layout_height="@dimen/cross_layout_length"
+        android:layout_width="@dimen/cross_layout_length"/>
 </LinearLayout>

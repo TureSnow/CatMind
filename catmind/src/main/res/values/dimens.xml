@@ -3,5 +3,7 @@
     <dimen name="activity_vertical_margin">2dp</dimen>
     <dimen name="activity_horizontal_margin">2dp</dimen>
     <dimen name="cross_circle_radius">50dp</dimen>
+    <dimen name="cross_stroke_width">1dp</dimen>
     <dimen name="cross_cross_length">100dp</dimen>
+    <dimen name="cross_layout_length">102dp</dimen>
 </resources>
