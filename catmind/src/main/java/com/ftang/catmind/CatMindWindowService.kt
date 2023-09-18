@@ -109,6 +109,7 @@ class CatMindWindowService : Service() {
         catFloatWindowLayoutParams = CatMindLayoutParamsFactory.createLayoutParams(
             CatMindLayoutParamsFactory.FLOAT_TYPE
         )
+        catFloatWindow.clipToOutline = true
         //添加猫猫头悬浮窗
         windowManager.addView(catFloatWindow, catFloatWindowLayoutParams)
         //设置猫猫头的监听对象:用于移动浮动窗口
@@ -268,7 +269,7 @@ class CatMindWindowService : Service() {
         } else {
             Log.d(TAG, "foundView name: ${foundView.accessibilityClassName}")
         }
-        return null
+        return foundView
     }
 
     /**
