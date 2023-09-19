@@ -23,6 +23,8 @@ import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.ftang.catmind.view.BoundView
+import java.lang.ref.WeakReference
 
 
 class CatMindWindowService : Service() {
@@ -39,6 +41,10 @@ class CatMindWindowService : Service() {
     private lateinit var catCrossWindowLayoutParams: LayoutParams
     private lateinit var catCrossWindow: View
     private var crossVisible = false
+
+    private lateinit var catBoundWindowLayoutParams: LayoutParams
+    private lateinit var catBoundWindow: BoundView
+    private var boundVisible = false
 
     companion object {
         // 使用静态变量存储activity和fragment的意义在于这个service总是落后于MainActivity启动，
@@ -90,17 +96,16 @@ class CatMindWindowService : Service() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate() {
         super.onCreate()
-        Log.d(TAG, "CatMindWindowService onCreated")
         //初始化WindowManager对象
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         initCatMindFloatWindow()
         initCatMindBottomWindow()
         initCatMindCrossWindow()
+        initCatMindBoundWindow()
         LocalBroadcastManager
             .getInstance(this)
             .registerReceiver(catMindMessageReceiver, IntentFilter(ACTION_LISTEN_TO_CAT_MIND))
     }
-
     @SuppressLint("ClickableViewAccessibility")
     private fun initCatMindFloatWindow() {
         //初始化猫猫头布局
@@ -163,6 +168,28 @@ class CatMindWindowService : Service() {
             }
         })
     }
+    private fun initCatMindBoundWindow() {
+        catBoundWindowLayoutParams = CatMindLayoutParamsFactory.createLayoutParams(
+            CatMindLayoutParamsFactory.BOUND_TYPE
+        )
+        catBoundWindow = BoundView(application)
+        //设置双击监听：用于关闭聚焦圈
+        catBoundWindow.setOnClickListener(object : View.OnClickListener {
+            private var lastClickTime:Long = 0L
+            private val CLICK_INTERVAL:Long = 300
+            override fun onClick(view: View?) {
+                val now = System.currentTimeMillis()
+                if (now - lastClickTime < CLICK_INTERVAL) {
+                    //触发双击事件
+                    dismissBoundView()
+                    showCross()
+                }
+                lastClickTime = now
+            }
+        })
+    }
+
+
 
     private fun initCatMindBottomWindow() {
         catBottomWindow = LayoutInflater.from(this).inflate(R.layout.cat_mind_bottom_layout, null)
@@ -192,11 +219,18 @@ class CatMindWindowService : Service() {
         catCrossWindow.setOnTouchListener(object : View.OnTouchListener {
             private var mFloatRawX = 0
             private var mFloatRawY = 0
+            private var moved = false
+            @SuppressLint("ClickableViewAccessibility")
             override fun onTouch(view: View?, motionEvent: MotionEvent?): Boolean {
                 when (motionEvent?.action) {
                     MotionEvent.ACTION_DOWN -> {
                         mFloatRawX = motionEvent.rawX.toInt()
                         mFloatRawY = motionEvent.rawY.toInt()
+                        if (boundVisible) {
+                            windowManager.removeView(catBoundWindow)
+                            boundVisible = !boundVisible
+                        }
+                        moved = false
                     }
 
                     MotionEvent.ACTION_MOVE -> {
@@ -211,16 +245,20 @@ class CatMindWindowService : Service() {
                             y += movedY
                         }
                         windowManager.updateViewLayout(view, catCrossWindowLayoutParams)
+                        moved = true
                     }
 //
                     MotionEvent.ACTION_UP -> {
                         //这里要去渲染view的边界，获取布局信息并显示
-                        val location = IntArray(2)
-                        catCrossWindow.getLocationOnScreen(location)
-                        val size = catCrossWindow.measuredHeight / 2
-                        val centerX = location[0] + size
-                        val centerY = location[1] + size
-                        findViewByPoint(centerX, centerY)
+                        if (moved) {
+                            val location = IntArray(2)
+                            catCrossWindow.getLocationOnScreen(location)
+                            val size = catCrossWindow.measuredHeight / 2
+                            val centerX = location[0] + size
+                            val centerY = location[1] + size
+                            findViewByPoint(centerX, centerY)
+                        }
+                        moved = false
                     }
                 }
                 return false
@@ -234,10 +272,7 @@ class CatMindWindowService : Service() {
                 val now = System.currentTimeMillis()
                 if (now - lastClickTime < CLICK_INTERVAL) {
                     //触发双击事件
-                    if (crossVisible) {
-                        windowManager.removeView(catCrossWindow)
-                    }
-                    crossVisible = !crossVisible
+                    dismissCross()
                 }
                 lastClickTime = now
             }
@@ -256,8 +291,8 @@ class CatMindWindowService : Service() {
         }
     }
 
-    private fun findViewByPoint(x: Int, y: Int): View? {
-        val activity = CatMind.activityReference?.get() ?: return null
+    private fun findViewByPoint(x: Int, y: Int){
+        val activity = CatMind.activityReference?.get() ?: return
         val decorView = activity.window.decorView
         val decorLocation = IntArray(2);
         decorView.getLocationOnScreen(decorLocation)
@@ -267,11 +302,23 @@ class CatMindWindowService : Service() {
         if (foundView == null) {
             Log.d(TAG, "foundView is null")
         } else {
-            Log.d(TAG, "foundView name: ${foundView.accessibilityClassName}")
+            showBoundView(view = foundView)
         }
-        return foundView
     }
 
+    private fun showBoundView(view: View) {
+        catBoundWindow.setTargetView(WeakReference(view))
+        windowManager.addView(catBoundWindow, catBoundWindowLayoutParams)
+        boundVisible = true
+        dismissCross()
+    }
+
+    private fun dismissBoundView() {
+        if (boundVisible) {
+            windowManager.removeView(catBoundWindow)
+            boundVisible = !boundVisible
+        }
+    }
     /**
      * 根据绝对坐标查找view中的元素
      */
@@ -285,12 +332,7 @@ class CatMindWindowService : Service() {
                 val childY = y - location[1]
                 if (childX >= 0 && childY >= 0 && childX <= childView.width && childY <= childView.height) {
                     // 在子 View 中查找
-                    val targetView = findTargetView(childView, x, y)
-                    if (targetView != null) {
-                        return targetView
-                    } else {
-                        return childView
-                    }
+                    return findTargetView(childView, x, y) ?: childView
                 }
             }
         } else {
@@ -304,6 +346,28 @@ class CatMindWindowService : Service() {
             }
         }
         return null
+    }
+
+    private fun drawViewRecursive(view: View) {
+        val location = IntArray(2)
+        view.getLocationOnScreen(location)
+        val width = view.width
+        val height = view.height
+        
+    }
+
+    private fun dismissCross() {
+        if (crossVisible) {
+            windowManager.removeView(catCrossWindow)
+            crossVisible = !crossVisible
+        }
+    }
+
+    private fun showCross() {
+        if (!crossVisible) {
+            windowManager.addView(catCrossWindow, catCrossWindowLayoutParams)
+            crossVisible = !crossVisible
+        }
     }
 
     override fun onBind(p0: Intent?): IBinder? = null
@@ -352,6 +416,9 @@ class CatMindWindowService : Service() {
         }
         if (crossVisible) {
             windowManager.removeView(catCrossWindow)
+        }
+        if (boundVisible) {
+            windowManager.removeView(catBoundWindow)
         }
         LocalBroadcastManager
             .getInstance(this)
