@@ -295,12 +295,8 @@ class CatMindWindowService : Service() {
     }
     private fun findViewByPoint(x: Int, y: Int){
         val activity = CatMind.activityReference?.get() ?: return
-        val decorView = activity.window.decorView
-        val decorLocation = IntArray(2);
-        decorView.getLocationOnScreen(decorLocation)
-        val decorX = x - decorLocation[0]
-        val decorY = y - decorLocation[1]
-        val foundView = findTargetView(decorView, decorX, decorY)
+        val contentView = activity.window.decorView.findViewById<View>(android.R.id.content)
+        val foundView = findTargetView(contentView, x, y)
         if (foundView == null) {
             Log.d(TAG, "foundView is null")
         } else {
