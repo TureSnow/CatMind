@@ -227,7 +227,7 @@ class CatMindWindowService : Service() {
                         }
                         windowManager.updateViewLayout(view, catCrossWindowLayoutParams)
                     }
-//
+
                     MotionEvent.ACTION_UP -> {
                         //这里要去渲染view的边界，获取布局信息并显示
                         if (moved) {
@@ -296,7 +296,7 @@ class CatMindWindowService : Service() {
     private fun findViewByPoint(x: Int, y: Int){
         val activity = CatMind.activityReference?.get() ?: return
         val decorView = activity.window.decorView
-        val decorLocation = IntArray(2);
+        val decorLocation = IntArray(2)
         decorView.getLocationOnScreen(decorLocation)
         val decorX = x - decorLocation[0]
         val decorY = y - decorLocation[1]
@@ -304,6 +304,7 @@ class CatMindWindowService : Service() {
         if (foundView == null) {
             Log.d(TAG, "foundView is null")
         } else {
+            Log.d(TAG, "foundView:${foundView.accessibilityClassName}")
             showBoundView(view = foundView)
             dismissCross()
         }
