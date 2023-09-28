@@ -1,4 +1,4 @@
-package com.ftang.catmind
+package com.ftang.catmind.extension
 
 import android.app.Activity
 import android.app.Application

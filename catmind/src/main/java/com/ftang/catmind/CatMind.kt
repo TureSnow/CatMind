@@ -2,14 +2,11 @@ package com.ftang.catmind
 
 import android.app.Activity
 import android.app.Application
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
-import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
@@ -18,6 +15,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ProcessLifecycleOwner
+import com.ftang.catmind.extension.getClassNameWithExtension
+import com.ftang.catmind.extension.registerPartialActivityLifecycleCallbacks
+import com.ftang.catmind.service.CatMindWindowService
 import java.lang.ref.WeakReference
 
 object CatMind {

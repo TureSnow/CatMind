@@ -1,6 +1,7 @@
-package com.ftang.catmind
+package com.ftang.catmind.service
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -16,36 +17,47 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.WindowManager.LayoutParams
 import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.ftang.catmind.view.BoundView
-import java.lang.ref.WeakReference
+import com.ftang.catmind.CatMind
+import com.ftang.catmind.Factory.CatMindLayoutParamsFactory
+import com.ftang.catmind.R
+import com.ftang.catmind.ui.CatMindMask
+import java.util.concurrent.atomic.AtomicBoolean
 
 
 class CatMindWindowService : Service() {
     private val TAG: String = "CatMind"
     private lateinit var windowManager: WindowManager
 
-    private lateinit var catFloatWindowLayoutParams: LayoutParams
+    private val catFloatWindowLayoutParams: LayoutParams by lazy {
+        CatMindLayoutParamsFactory.create(
+            CatMindLayoutParamsFactory.FLOAT_TYPE
+        )
+    }
     private lateinit var catFloatWindow: View
     private var floatVisible = false
 
-    private lateinit var catBottomWindowLayoutParams: LayoutParams
+    private val catBottomWindowLayoutParams: LayoutParams by lazy {
+        CatMindLayoutParamsFactory.create(
+            CatMindLayoutParamsFactory.BOTTOM_TYPE
+        )
+    }
     private lateinit var catBottomWindow: View
     private var bottomVisible = false
 
-    private lateinit var catCrossWindowLayoutParams: LayoutParams
-    private lateinit var catCrossWindow: View
-    private var crossVisible = false
-
-    private lateinit var catBoundWindowLayoutParams: LayoutParams
-    private lateinit var catBoundWindow: BoundView
-    private var boundVisible = false
+    private val catMaskWindowLayoutParams: LayoutParams by lazy {
+        CatMindLayoutParamsFactory.create(
+            CatMindLayoutParamsFactory.MASK_TYPE
+        )
+    }
+    private var mask:CatMindMask? = null
+    private var maskAdded = AtomicBoolean(false)
 
     companion object {
         // 使用静态变量存储activity和fragment的意义在于这个service总是落后于MainActivity启动，
@@ -57,7 +69,7 @@ class CatMindWindowService : Service() {
         // 需要采用一种通信方式通知CatMindWindowService
         // 由CatMindWindowService更新消息
         // 这里采用了广播的方式
-        private val ACTION_LISTEN_TO_CAT_MIND =
+        val ACTION_LISTEN_TO_CAT_MIND =
             "com.ftang.catmind.ACTION_LISTEN_TO_CATMIND"
 
         fun sendActivityAndFragment(
@@ -67,7 +79,6 @@ class CatMindWindowService : Service() {
         ) {
             activityClassName = activityName?:""
             fragmentClassName = fragmentName?:""
-            Log.d("CatMind", "activity name:$activityClassName, fragment name:$fragmentClassName")
             val intent = Intent(ACTION_LISTEN_TO_CAT_MIND)
             LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
         }
@@ -87,9 +98,15 @@ class CatMindWindowService : Service() {
 
     private val catMindMessageReceiver:BroadcastReceiver = object : BroadcastReceiver(){
         override fun onReceive(context: Context, intent: Intent) {
-            if (bottomVisible) {
-                catBottomWindow.findViewById<TextView>(R.id.activity_name).text = activityClassName
-                catBottomWindow.findViewById<TextView>(R.id.fragment_name).text = fragmentClassName
+            val type = intent.getIntExtra("type", 0)
+            if (type == 0) {
+                if (bottomVisible) {
+                    catBottomWindow.findViewById<TextView>(R.id.activity_name).text = activityClassName
+                    catBottomWindow.findViewById<TextView>(R.id.fragment_name).text = fragmentClassName
+                }
+            } else if (type == 1) {
+                dismissMask()
+                showFloat()
             }
         }
     }
@@ -101,8 +118,6 @@ class CatMindWindowService : Service() {
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         initCatMindFloatWindow()
         initCatMindBottomWindow()
-        initCatMindCrossWindow()
-        initCatMindBoundWindow()
         LocalBroadcastManager
             .getInstance(this)
             .registerReceiver(catMindMessageReceiver, IntentFilter(ACTION_LISTEN_TO_CAT_MIND))
@@ -111,10 +126,6 @@ class CatMindWindowService : Service() {
     private fun initCatMindFloatWindow() {
         //初始化猫猫头布局
         catFloatWindow = LayoutInflater.from(this).inflate(R.layout.cat_mind_float_layout, null)
-        //初始化CatFloatLayoutParam
-        catFloatWindowLayoutParams = CatMindLayoutParamsFactory.createLayoutParams(
-            CatMindLayoutParamsFactory.FLOAT_TYPE
-        )
         catFloatWindow.clipToOutline = true
         //添加猫猫头悬浮窗
         showFloat()
@@ -156,7 +167,6 @@ class CatMindWindowService : Service() {
             override fun onClick(view: View?) {
                 val now = System.currentTimeMillis()
                 if (now - lastClickTime < CLICK_INTERVAL) {
-                    //触发双击事件
                     if (bottomVisible) {
                         windowManager.removeView(catBottomWindow)
                     } else {
@@ -169,97 +179,21 @@ class CatMindWindowService : Service() {
             }
         })
     }
+
     private fun initCatMindBottomWindow() {
         catBottomWindow = LayoutInflater.from(this).inflate(R.layout.cat_mind_bottom_layout, null)
-        catBottomWindowLayoutParams = CatMindLayoutParamsFactory.createLayoutParams(
-            CatMindLayoutParamsFactory.BOTTOM_TYPE
-        )
         catBottomWindow.findViewById<View>(R.id.cat_mind_bottom_dismiss).apply {
             setOnClickListener {
-                bottomVisible = !bottomVisible
-                windowManager.removeView(catBottomWindow)
+                dismissBottom()
             }
         }
-        catBottomWindow.findViewById<TextView>(R.id.show_cross).apply {
-            setOnClickListener {
-                bottomVisible = !bottomVisible
-                windowManager.removeView(catBottomWindow)
-                showCross()
-                dismissFloat()
+        catBottomWindow.findViewById<TextView>(R.id.click_intercept).apply {
+            setOnClickListener{
+                if (!maskAdded.get()){
+                    CatMind.activityReference?.get()?.let { showMask(it) }
+                }
             }
         }
-    }
-    private fun initCatMindCrossWindow() {
-        catCrossWindow = LayoutInflater.from(this).inflate(R.layout.cat_mind_cross_layout, null)
-        catCrossWindowLayoutParams = CatMindLayoutParamsFactory.createLayoutParams(
-            CatMindLayoutParamsFactory.CROSS_TYPE
-        )
-        catCrossWindow.setOnTouchListener(object : View.OnTouchListener {
-            private var mFloatRawX = 0
-            private var mFloatRawY = 0
-            private var moved = false
-            @SuppressLint("ClickableViewAccessibility")
-            override fun onTouch(view: View?, motionEvent: MotionEvent?): Boolean {
-                when (motionEvent?.action) {
-                    MotionEvent.ACTION_DOWN -> {
-                        mFloatRawX = motionEvent.rawX.toInt()
-                        mFloatRawY = motionEvent.rawY.toInt()
-                        if (boundVisible) {
-                            windowManager.removeView(catBoundWindow)
-                            boundVisible = !boundVisible
-                        }
-                        moved = false
-                    }
-
-                    MotionEvent.ACTION_MOVE -> {
-                        val nowX = motionEvent.rawX.toInt()
-                        val nowY = motionEvent.rawY.toInt()
-                        val movedX = nowX - mFloatRawX
-                        val movedY = nowY - mFloatRawY
-                        if (movedX != 0 || movedY != 0) {
-                            moved = true
-                        }
-                        mFloatRawX = nowX
-                        mFloatRawY = nowY
-                        catCrossWindowLayoutParams.apply {
-                            x += movedX
-                            y += movedY
-                        }
-                        windowManager.updateViewLayout(view, catCrossWindowLayoutParams)
-                    }
-
-                    MotionEvent.ACTION_UP -> {
-                        //这里要去渲染view的边界，获取布局信息并显示
-                        if (moved) {
-                            val location = IntArray(2)
-                            catCrossWindow.getLocationOnScreen(location)
-                            val size = catCrossWindow.measuredHeight / 2
-                            val centerX = location[0] + size
-                            val centerY = location[1] + size
-                            findViewByPoint(centerX, centerY)
-                        }
-                        moved = false
-                    }
-                }
-                return false
-            }
-        })
-
-        //设置双击监听：用于关闭聚焦圈
-        catCrossWindow.setOnClickListener(object : View.OnClickListener {
-            private var lastClickTime:Long = 0L
-            private val CLICK_INTERVAL:Long = 300
-            override fun onClick(view: View?) {
-                val now = System.currentTimeMillis()
-                if (now - lastClickTime < CLICK_INTERVAL) {
-                    //触发双击事件
-                    dismissCross()
-                    dismissBoundView()
-                    showFloat()
-                }
-                lastClickTime = now
-            }
-        })
     }
     private fun refreshCatBottomWindow() {
         catBottomWindow.findViewById<TextView>(R.id.activity_name).apply {
@@ -273,95 +207,33 @@ class CatMindWindowService : Service() {
             }
         }
     }
-    private fun initCatMindBoundWindow() {
-        catBoundWindowLayoutParams = CatMindLayoutParamsFactory.createLayoutParams(
-            CatMindLayoutParamsFactory.BOUND_TYPE
-        )
-        catBoundWindow = BoundView(application)
-        //设置双击监听：用于关闭聚焦圈
-        catBoundWindow.setOnClickListener(object : View.OnClickListener {
-            private var lastClickTime:Long = 0L
-            private val CLICK_INTERVAL:Long = 300
-            override fun onClick(view: View?) {
-                val now = System.currentTimeMillis()
-                if (now - lastClickTime < CLICK_INTERVAL) {
-                    //触发双击事件
-                    dismissBoundView()
-                    showCross()
-                }
-                lastClickTime = now
-            }
-        })
-    }
-    private fun findViewByPoint(x: Int, y: Int){
-        val activity = CatMind.activityReference?.get() ?: return
-        val decorView = activity.window.decorView
-        val decorLocation = IntArray(2)
-        decorView.getLocationOnScreen(decorLocation)
-        val decorX = x - decorLocation[0]
-        val decorY = y - decorLocation[1]
-        val foundView = findTargetView(decorView, decorX, decorY)
-        if (foundView == null) {
-            Log.d(TAG, "foundView is null")
-        } else {
-            Log.d(TAG, "foundView:${foundView.accessibilityClassName}")
-            showBoundView(view = foundView)
-            dismissCross()
+
+    private fun showMask(activity: Activity) {
+        if (maskAdded.compareAndSet(false, true)) {
+            windowManager.addView(
+                CatMindMask(activity).apply {
+                    mask = this
+                },
+                catMaskWindowLayoutParams
+            )
+            dismissFloat()
+            dismissBottom()
         }
     }
-    /**
-     * 根据绝对坐标查找view中的元素
-     */
-    private fun findTargetView(view: View, x: Int, y: Int): View? {
-        if (view is ViewGroup) {
-            for (i in 0 until view.childCount) {
-                val childView = view.getChildAt(i)
-                val location = IntArray(2)
-                childView.getLocationOnScreen(location)
-                val childX = x - location[0]
-                val childY = y - location[1]
-                if (childX >= 0 && childY >= 0 && childX <= childView.width && childY <= childView.height) {
-                    // 在子 View 中查找
-                    return findTargetView(childView, x, y) ?: childView
-                }
-            }
-        } else {
-            val location = IntArray(2)
-            view.getLocationOnScreen(location)
-            val viewX = x - location[0]
-            val viewY = y - location[1]
-            if (viewX >= 0 && viewY >= 0 && viewX <= view.width && viewY <= view.height) {
-                // 找到了对应坐标的 View
-                return view
+
+    private fun dismissMask() {
+        if (maskAdded.compareAndSet(true, false)) {
+            mask?.let {
+                windowManager.removeView(mask)
+                mask = null
             }
         }
-        return null
     }
 
-    private fun showBoundView(view: View) {
-        catBoundWindow.setTargetView(WeakReference(view))
-        windowManager.addView(catBoundWindow, catBoundWindowLayoutParams)
-        boundVisible = true
-    }
-
-    private fun dismissBoundView() {
-        if (boundVisible) {
-            windowManager.removeView(catBoundWindow)
-            boundVisible = !boundVisible
-        }
-    }
-
-    private fun dismissCross() {
-        if (crossVisible) {
-            windowManager.removeView(catCrossWindow)
-            crossVisible = !crossVisible
-        }
-    }
-
-    private fun showCross() {
-        if (!crossVisible) {
-            windowManager.addView(catCrossWindow, catCrossWindowLayoutParams)
-            crossVisible = !crossVisible
+    private fun dismissBottom() {
+        if (bottomVisible) {
+            windowManager.removeView(catBottomWindow)
+            bottomVisible = !bottomVisible
         }
     }
 
@@ -420,15 +292,8 @@ class CatMindWindowService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         dismissFloat()
-        if (bottomVisible) {
-            windowManager.removeView(catBottomWindow)
-        }
-        if (crossVisible) {
-            windowManager.removeView(catCrossWindow)
-        }
-        if (boundVisible) {
-            windowManager.removeView(catBoundWindow)
-        }
+        dismissBottom()
+        dismissMask()
         LocalBroadcastManager
             .getInstance(this)
             .unregisterReceiver(catMindMessageReceiver)

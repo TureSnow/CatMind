@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application>
-        <service android:name=".CatMindWindowService"
+        <service android:name=".service.CatMindWindowService"
             android:enabled="true"
             android:exported="true">
         </service>

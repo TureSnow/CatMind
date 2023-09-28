@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:background="@drawable/cat_mind_bottom_window_backgroud"
+    android:alpha="0.72"
     android:padding="1dp"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
@@ -9,6 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:alpha="0.72"
         android:divider="@drawable/cat_mind_divider_row"
         android:showDividers="middle"
         android:gravity="center">
@@ -16,6 +18,7 @@
             android:id="@+id/activity_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="#8093FF93"
             android:layout_margin="10dp"
             android:textAppearance="@android:style/TextAppearance.Large"
             android:text="activity" />
@@ -24,6 +27,7 @@
             android:id="@+id/fragment_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="#80FFED97"
             android:layout_margin="10dp"
             android:textAppearance="@android:style/TextAppearance.Large"
             android:text="fragment" />
@@ -35,7 +39,7 @@
             android:divider="@drawable/cat_mind_divider_column"
             android:showDividers="middle">
             <TextView
-                android:id="@+id/show_cross"
+                android:id="@+id/click_intercept"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
