@@ -14,6 +14,7 @@ import android.graphics.Color
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -96,7 +97,7 @@ class CatMindWindowService : Service() {
         }
     }
 
-    private val catMindMessageReceiver:BroadcastReceiver = object : BroadcastReceiver(){
+    private val catMindMessageReceiver:BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val type = intent.getIntExtra("type", 0)
             if (type == 0) {
@@ -182,6 +183,35 @@ class CatMindWindowService : Service() {
 
     private fun initCatMindBottomWindow() {
         catBottomWindow = LayoutInflater.from(this).inflate(R.layout.cat_mind_bottom_layout, null)
+        catBottomWindow.setOnTouchListener(object : View.OnTouchListener {
+            //悬浮窗相对于屏幕左上角的坐标，不可以直接当作LayoutParams的x、y的值，需要进行转换
+            private var onBottom = true
+            private var mBottomRawY = 0
+            @SuppressLint("ClickableViewAccessibility")
+            override fun onTouch(view: View?, motionEvent: MotionEvent?): Boolean {
+                when (motionEvent?.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        mBottomRawY = motionEvent.rawY.toInt()
+                    }
+
+                    MotionEvent.ACTION_MOVE -> {
+                        val nowY = motionEvent.rawY.toInt()
+                        onBottom = nowY - mBottomRawY >= 0
+                        mBottomRawY = nowY
+                    }
+
+                    MotionEvent.ACTION_UP -> {
+                        catBottomWindowLayoutParams.gravity = if (onBottom) {
+                            Gravity.BOTTOM
+                        } else {
+                            Gravity.TOP
+                        }
+                        windowManager.updateViewLayout(view, catBottomWindowLayoutParams)
+                    }
+                }
+                return false
+            }
+        })
         catBottomWindow.findViewById<View>(R.id.cat_mind_bottom_dismiss).apply {
             setOnClickListener {
                 dismissBottom()
