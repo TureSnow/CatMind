@@ -3,6 +3,10 @@ package com.ftang.catmind.plugin.parser.view
 import android.graphics.Rect
 import android.os.Build
 import android.view.View
+import androidx.core.view.marginBottom
+import androidx.core.view.marginLeft
+import androidx.core.view.marginRight
+import androidx.core.view.marginTop
 import com.ftang.catmind.extension.Output
 import com.ftang.catmind.extension.colorToString
 import com.ftang.catmind.extension.dpStr
@@ -152,5 +156,17 @@ open class ViewPropertiesParser<T : View>(protected val view: T) : PropertiesPar
                 props["overlappingRendering"] = view.hasOverlappingRendering
             }
         }
+
+        props["padding_left"] = view.paddingLeft.dpStr
+        props["padding_top"] = view.paddingTop.dpStr
+        props["padding_right"] = view.paddingRight.dpStr
+        props["padding_bottom"] = view.paddingBottom.dpStr
+
+        props["margin_left"] = view.marginLeft.dpStr
+        props["margin_top"] = view.marginTop.dpStr
+        props["margin_right"] = view.marginRight.dpStr
+        props["margin_bottom"] = view.marginBottom.dpStr
+
+        props["body W x H"] = view.width.dpStr + " X " + view.height.dpStr
     }
 }
