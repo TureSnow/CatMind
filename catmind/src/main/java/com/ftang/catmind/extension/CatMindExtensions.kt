@@ -52,3 +52,13 @@ fun Class<out Any>.getClassNameWithExtension(): String {
 
 fun Class<out Any>.isKotlin() =
     this.declaredAnnotations.any { it.annotationClass == Metadata::class }
+
+@MustBeDocumented
+@Target(
+    AnnotationTarget.FIELD,
+    AnnotationTarget.VALUE_PARAMETER,
+    AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY_SETTER
+)
+@Retention(AnnotationRetention.SOURCE)
+annotation class Output

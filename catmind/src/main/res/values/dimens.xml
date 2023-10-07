@@ -6,4 +6,5 @@
     <dimen name="cross_stroke_width">1dp</dimen>
     <dimen name="cross_cross_length">60dp</dimen>
     <dimen name="cross_layout_length">62dp</dimen>
+    <dimen name="cat_mind_container_height">250dp</dimen>
 </resources>

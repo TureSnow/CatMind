@@ -9,15 +9,18 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.ftang.catmind.CatMind
 import com.ftang.catmind.service.CatMindWindowService
 import com.ftang.catmind.touch.TouchTargetFinder
+import com.ftang.catmind.ui.panel.CatMindPopupPanelContainerImpl
 import com.ftang.catmind.util.fromLocation
 import com.ftang.catmind.util.tryGetActivity
+import java.lang.ref.WeakReference
 
 /**
  * 用来拦截点击事件的一层mask
  */
-class CatMindMask(
+class CatMindMask (
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
@@ -80,9 +83,6 @@ class CatMindMask(
             }
         })
 
-
-
-
     override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
         ev?.let {
             gesture.onTouchEvent(ev)
@@ -92,11 +92,22 @@ class CatMindMask(
 
     private var targetView: CatMindTargetView = CatMindTargetView(null)
 
+    private val popupPanelContainer = CatMindPopupPanelContainerImpl(this)
+
     fun updateTargetViews(view: View?) {
+        popupPanelContainer.dismiss()
         if (view == null) {
             targetView.clearTarget()
+            CatMind.targetViewReference = null
         } else {
-            targetView.setTarget(view)
+            if (CatMind.targetViewReference?.get() == view) {
+                CatMind.targetViewReference = null
+                targetView.clearTarget()
+            } else {
+                targetView.setTarget(view)
+                CatMind.targetViewReference = WeakReference(view)
+                popupPanelContainer.show(view)
+            }
         }
         invalidate()
     }
@@ -115,5 +126,10 @@ class CatMindMask(
             }
         }
         super.dispatchDraw(canvas)
+    }
+
+    override fun onDetachedFromWindow() {
+        popupPanelContainer.dismiss()
+        super.onDetachedFromWindow()
     }
 }

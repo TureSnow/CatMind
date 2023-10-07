@@ -1,6 +1,5 @@
 package com.ftang.catmind
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Application
 import android.content.Intent
@@ -8,7 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
-import android.view.LayoutInflater
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
@@ -26,9 +25,10 @@ import java.lang.ref.WeakReference
 
 object CatMind {
     private const val TAG : String = "CatMind"
-    private lateinit var application: Application
+    lateinit var application: Application
     private const val ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE = 5469
     var activityReference: WeakReference<Activity>? = null
+    var targetViewReference: WeakReference<View>? =null
     //悬浮窗在父布局中的实际偏移量，可以直接应用在LayoutParams中
     var floatX = 0
     var floatY = 0
@@ -57,6 +57,7 @@ object CatMind {
                 @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
                 fun onAppToBackground() {
                     application.stopService(catMindWindowService)
+                    clearReference()
                 }
             }
         )
@@ -165,5 +166,10 @@ object CatMind {
             activityClass.getClassNameWithExtension(),
             fragmentClass?.getClassNameWithExtension()
         )
+    }
+
+    private fun clearReference() {
+        activityReference = null
+        targetViewReference = null
     }
 }

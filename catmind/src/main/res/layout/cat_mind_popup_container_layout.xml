@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/popup_panel"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/cat_mind_container_height"
+    android:layout_gravity="bottom"
+    android:background="#99000000"
+    android:orientation="vertical">
+
+    <androidx.viewpager.widget.ViewPager
+        android:id="@+id/popup_panel_viewpager"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal" />
+
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/popup_panel_tab"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:tabTextColor="@android:color/white"
+        app:tabSelectedTextColor="@color/cat_mind_primary_color"
+        app:tabIndicatorHeight="4dp"
+        app:tabIndicatorColor="@color/cat_mind_primary_color"
+        app:tabMode="scrollable" />
+</LinearLayout>

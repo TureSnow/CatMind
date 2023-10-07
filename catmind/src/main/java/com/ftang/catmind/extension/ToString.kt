@@ -9,9 +9,13 @@ import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.BackgroundColorSpan
 import android.view.Gravity
+import android.view.View
 import androidx.annotation.AnyRes
 import androidx.annotation.ColorInt
 import androidx.annotation.IdRes
+import com.ftang.catmind.CatMind
+import com.ftang.catmind.R
+import kotlin.math.roundToInt
 
 val Int.dpToPx: Int
     get() = (this.toFloat() * Resources.getSystem().displayMetrics.density).toInt()
@@ -62,6 +66,11 @@ fun resToString(context: Context, @AnyRes id: Int): String {
         hexToString(id)
     }
 }
+
+val Number.dpStr: String
+    get() = "${pxToDp.roundToInt()}dp"
+val Number.spStr: String
+    get() = "${pxToSp.roundToInt()}sp"
 
 fun idToString(context: Context, @IdRes id: Int): String {
     return try {
@@ -149,3 +158,12 @@ val Any?.simpleName: String
                 cn
             }
         }
+
+@MustBeDocumented
+@Retention(AnnotationRetention.SOURCE)
+@Target(
+    AnnotationTarget.FUNCTION,
+    AnnotationTarget.VALUE_PARAMETER,
+    AnnotationTarget.FIELD,
+    AnnotationTarget.LOCAL_VARIABLE)
+annotation class IntDef(vararg val value: Int)

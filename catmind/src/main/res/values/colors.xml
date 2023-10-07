@@ -4,4 +4,7 @@
     <color name="white">#FFFFFFFF</color>
     <color name="dialogPositiveButton">#007AFF</color>
     <color name="dialogNegativeButton">#FF3B30</color>
+    <color name="cat_mind_primary_color">#66B3FF</color>
+    <color name="cat_mind_error_color">@android:color/holo_red_light</color>
+    <color name="cat_mind_view_layout_source_color">#97FFFF</color>
 </resources>
