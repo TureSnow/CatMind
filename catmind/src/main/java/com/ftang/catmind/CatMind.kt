@@ -1,5 +1,6 @@
 package com.ftang.catmind
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Application
 import android.content.Intent
@@ -7,6 +8,9 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
+import android.view.LayoutInflater
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
@@ -63,7 +67,7 @@ object CatMind {
         application.registerPartialActivityLifecycleCallbacks(
             onActivityCreated = { activity ->
                 if (!hasOverLayPermission(application))
-                    requestPermissions(application, activity)
+                    showPermissionExplanationDialog(application, activity)
             },
             onActivityResumed = { activity ->
                 Log.d(TAG, "activity resumed")
@@ -76,6 +80,19 @@ object CatMind {
                 }
             }
         )
+    }
+
+    private fun showPermissionExplanationDialog(application: Application, activity: Activity) {
+        val dialog = AlertDialog.Builder(activity, R.style.CustomAlertDialog)
+            .setTitle("CatMind")
+            .setMessage("需要授权权限：允许显示在应用上层")
+            .setPositiveButton("授予权限") { _, _ ->
+                requestPermissions(application, activity)
+            }
+            .setNegativeButton("取消") { _, _ ->
+                Toast.makeText(application, "授权失败", Toast.LENGTH_SHORT).show()
+            }.create()
+        dialog.show()
     }
     
     private fun launchService(
