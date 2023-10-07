@@ -76,7 +76,7 @@ class CatMindMask (
 
             override fun onLongPress(e: MotionEvent) {
                 val intent = Intent(CatMindWindowService.ACTION_LISTEN_TO_CAT_MIND).apply {
-                    putExtra("type", 1)
+                    putExtra("type", CatMindWindowService.BROAD_CAST_TYPE_LONG_PRESS)
                 }
                 LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
                 super.onLongPress(e)

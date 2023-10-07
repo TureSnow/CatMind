@@ -168,6 +168,13 @@ object CatMind {
         )
     }
 
+    fun updateTargetView(view: View?) {
+        view?.let {
+            targetViewReference = WeakReference(view)
+            CatMindWindowService.notifyTargetViewChanged(application)
+        }
+    }
+
     private fun clearReference() {
         activityReference = null
         targetViewReference = null

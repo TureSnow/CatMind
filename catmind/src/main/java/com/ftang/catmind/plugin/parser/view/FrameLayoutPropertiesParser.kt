@@ -1,4 +1,4 @@
-package com.ftang.catmind.plugin.parser
+package com.ftang.catmind.plugin.parser.view
 
 import android.widget.FrameLayout
 import com.ftang.catmind.extension.Output

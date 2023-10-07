@@ -1,9 +1,9 @@
-package com.ftang.catmind.plugin
+package com.ftang.catmind.plugin.properties
 
 import android.view.View
-import com.ftang.catmind.CatMind
-import com.ftang.catmind.plugin.impl.ViewPropertiesPluginDefaultImpl
-import com.ftang.catmind.plugin.parser.PropertiesParser
+import com.ftang.catmind.plugin.CatMindPlugin
+import com.ftang.catmind.plugin.parser.view.PropertiesParser
+import com.ftang.catmind.plugin.properties.impl.ViewPropertiesPluginDefaultImpl
 
 interface ViewPropertiesPlugin : CatMindPlugin {
 

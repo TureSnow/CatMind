@@ -1,4 +1,4 @@
-package com.ftang.catmind.plugin.parser
+package com.ftang.catmind.plugin.parser.view
 
 import android.graphics.Rect
 import android.os.Build

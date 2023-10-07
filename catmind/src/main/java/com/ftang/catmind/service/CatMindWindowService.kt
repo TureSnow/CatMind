@@ -73,6 +73,10 @@ class CatMindWindowService : Service() {
         val ACTION_LISTEN_TO_CAT_MIND =
             "com.ftang.catmind.ACTION_LISTEN_TO_CATMIND"
 
+        val BROAD_CAST_TYPE_DEFAULT = 0
+        val BROAD_CAST_TYPE_LONG_PRESS = 1
+        val BROAD_CAST_TYPE_TARGET_VIEW_CHANGE = 2
+
         fun sendActivityAndFragment(
             context: Context,
             activityName: String?,
@@ -95,19 +99,32 @@ class CatMindWindowService : Service() {
             val intent = Intent(ACTION_LISTEN_TO_CAT_MIND)
             LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
         }
+
+        fun notifyTargetViewChanged(context: Context) {
+            val intent = Intent(ACTION_LISTEN_TO_CAT_MIND).apply {
+                putExtra("type", BROAD_CAST_TYPE_TARGET_VIEW_CHANGE)
+            }
+            LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
+        }
     }
 
     private val catMindMessageReceiver:BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            val type = intent.getIntExtra("type", 0)
-            if (type == 0) {
-                if (bottomVisible) {
-                    catBottomWindow.findViewById<TextView>(R.id.activity_name).text = activityClassName
-                    catBottomWindow.findViewById<TextView>(R.id.fragment_name).text = fragmentClassName
+            val type = intent.getIntExtra("type", BROAD_CAST_TYPE_DEFAULT)
+            when(type) {
+                BROAD_CAST_TYPE_LONG_PRESS -> {
+                    dismissMask()
+                    showFloat()
                 }
-            } else if (type == 1) {
-                dismissMask()
-                showFloat()
+                BROAD_CAST_TYPE_TARGET_VIEW_CHANGE -> {
+                    mask?.updateTargetViews(CatMind.targetViewReference?.get())
+                }
+                BROAD_CAST_TYPE_DEFAULT -> {
+                    if (bottomVisible) {
+                        catBottomWindow.findViewById<TextView>(R.id.activity_name).text = activityClassName
+                        catBottomWindow.findViewById<TextView>(R.id.fragment_name).text = fragmentClassName
+                    }
+                }
             }
         }
     }
