@@ -6,6 +6,6 @@ import com.ftang.catmind.CatMind
 class MainApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        CatMind.initialize(this)
+//        CatMind.initialize(this)
     }
 }

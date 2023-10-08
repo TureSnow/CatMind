@@ -2,6 +2,7 @@ package com.ftang.catmind
 
 import android.app.Activity
 import android.app.Application
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -22,6 +23,7 @@ import com.ftang.catmind.extension.getClassNameWithExtension
 import com.ftang.catmind.extension.registerPartialActivityLifecycleCallbacks
 import com.ftang.catmind.service.CatMindWindowService
 import java.lang.ref.WeakReference
+import java.util.concurrent.atomic.AtomicBoolean
 
 object CatMind {
     private const val TAG : String = "CatMind"
@@ -33,7 +35,15 @@ object CatMind {
     var floatX = 0
     var floatY = 0
 
-    fun initialize(application: Application) {
+    private val init = AtomicBoolean(false)
+    fun initialize(ctx: Context) {
+        if (init.compareAndSet(false, true)) {
+            application = ctx.applicationContext as Application
+            initialize(application)
+        }
+    }
+
+    private fun initialize(application: Application) {
         Log.d(TAG,"catMind init")
         val catMindWindowServiceIntent = Intent(application, CatMindWindowService::class.java)
         bindCatMindServiceOnAppEvent(application, catMindWindowServiceIntent)
