@@ -25,7 +25,7 @@ import java.lang.ref.WeakReference
 
 object CatMind {
     private const val TAG : String = "CatMind"
-    lateinit var application: Application
+    private lateinit var application: Application
     private const val ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE = 5469
     var activityReference: WeakReference<Activity>? = null
     var targetViewReference: WeakReference<View>? =null
@@ -112,7 +112,12 @@ object CatMind {
     }
 
 
-    private fun hasOverLayPermission(application: Application) = Settings.canDrawOverlays(application)
+    private fun hasOverLayPermission(application: Application) =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Settings.canDrawOverlays(application)
+        } else {
+            true
+        }
 
     private fun requestPermissions(
         application: Application,
