@@ -28,7 +28,6 @@ class CatMindPopupPanelContainerImpl(val parent: ViewGroup) : CatMindPopupPanelC
         dismiss()
         val childrenPanel: List<CatMindChildPanel> =  listOf(
             CatMindPropertiesChildPanel(CatMindDefaultChildPanelPlugin.PROPERTIES_PRIORITY)
-//            CatMindHierarchyChildPanel(CatMindDefaultChildPanelPlugin.HIERARCHY_PRIORITY)
         )
         if (childrenPanel.isNotEmpty()) {
             popupPanel = CatMindPopupPanel(
@@ -63,7 +62,6 @@ class CatMindPopupPanelContainerImpl(val parent: ViewGroup) : CatMindPopupPanelC
     ) {
         private val popupPanel = inspectorMask.popup_panel
         private val viewPager = popupPanel.popup_panel_viewpager
-        private val tabLayout = popupPanel.popup_panel_tab
 
         private val adapter = PanelAdapter(children)
         fun dismiss() {
@@ -96,7 +94,6 @@ class CatMindPopupPanelContainerImpl(val parent: ViewGroup) : CatMindPopupPanelC
                 }
             })
             viewPager.setCurrentItem(lastSelectedPanelPosition, false)
-            tabLayout.setupWithViewPager(viewPager)
         }
     }
 
@@ -143,10 +140,6 @@ class CatMindPopupPanelContainerImpl(val parent: ViewGroup) : CatMindPopupPanelC
 
         override fun setPrimaryItem(container: ViewGroup, position: Int, obj: Any) {
             val nextPrimary = children[position]
-//            if (currentPrimary != nextPrimary) {
-//                currentPrimary?.onUserVisibleHint(false)
-//                nextPrimary.onUserVisibleHint(true)
-//            }
             currentPrimary = nextPrimary
         }
 
